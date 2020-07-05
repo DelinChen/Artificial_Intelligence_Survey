@@ -1,13 +1,16 @@
-import random
+# a3.py
 
 # game board
 # 0 1 2
 # 3 4 5
 # 6 7 8
 
+import random
+import operator
+
 class ticTacToe:
     def __init__(self):
-        self.activePlayer = 1
+        self.currentPlayer = 1
         self.gameBoard = [0, 0, 0, 0, 0, 0, 0, 0, 0]
         self.AI = 1
 
@@ -19,26 +22,26 @@ class ticTacToe:
         self.AI = order
         return self.AI
 
-    # return a copy of current game state
-    def copyGameState(self):
-        copyGame = ticTacToe()
-        copyGame.activePlayer = self.activePlayer
-        copyGame.gameBoard = self.gameBoard[:]
-        copyGame.AI = self.AI
-        return copyGame
-
     def getGameBoard(self):
         return self.gameBoard
 
     def currentPlayer(self):
-        return self.activePlayer
+        return self.currentPlayer
+
+    # return a copy of current game state
+    def copyGame(self):
+        copy = ticTacToe()
+        copy.currentPlayer = self.currentPlayer
+        copy.gameBoard = self.gameBoard[:]
+        copy.AI = self.AI
+        return copy
 
     def switchPlayer(self):
-        if (self.activePlayer == 2):
-            self.activePlayer = 1
+        if (self.currentPlayer == 1):
+            self.currentPlayer = 2
         else:
-            self.activePlayer = 2
-        return self.activePlayer
+            self.currentPlayer = 1
+        return self.currentPlayer
 
     def doMove(self, index, player):
         self.gameBoard[index] = player
@@ -52,11 +55,11 @@ class ticTacToe:
 
     # return a list of legal moves available
     def legalMoves(self):
-        legalIndex = []
+        moves = []
         for i in range(9):
             if self.gameBoard[i] == 0:
-                legalIndex.append(i)
-        return legalIndex
+                moves.append(i)
+        return moves
 
     # if there's 0 in numArr, return False, else return True
     def noZeroCheck(self, numArr):
@@ -66,12 +69,9 @@ class ticTacToe:
         return True
 
     # to check current state win or lose or draw
+    # return -1 if not finished yet, return 0 if draw
+    # return 1 if player 1 wins, return 2 if player 2 wins
     def winLoseDraw(self):
-        # return -1 if not finished yet
-        # return 0 if draw
-        # return 1 if player 1 wins
-        # return 2 if player 2 wins
-
         winState = [(0,3,6), (1,4,7), (2,5,8), (0,1,2), (3,4,5), (6,7,8), (0,4,8), (2,4,6)]
         for i in range(8):
             if (self.gameBoard[winState[i][0]] == self.gameBoard[winState[i][1]]) and (self.gameBoard[winState[i][0]] == self.gameBoard[winState[i][2]]) and self.noZeroCheck(winState[i]):
@@ -85,68 +85,54 @@ class ticTacToe:
             return -1
 
     def display(self):
-        display = ['_ ', '_ ', '_ ', '_ ', '_ ', '_ ', '_ ', '_ ', '_ ']
-        dispString = ''
+        string = ''
         for i in range(9):
-            # if taken already, change
             if self.gameBoard[i] == 1:
-                display[i] = 'X '
-            if self.gameBoard[i] == 2:
-                display[i] = 'O '
-
-            # append to the string
-            if i == 2 or i == 5:
-                dispString += (display[i] + '\n')
+                string +='X '
+            elif self.gameBoard[i] == 2:
+                string += 'O '
             else:
-                dispString += display[i]
+                string += '_ '
 
-        print(dispString)
+            if i == 2 or i == 5:
+                string += '\n'
+
+        print(string)
     
-
+# read https://towardsdatascience.com/monte-carlo-tree-search-158a917a8baa for help with Monte Carlo Tree Search
 class monteCarloTreeSearch:
-    def __init__(self, game, randPlayNum):
+    def __init__(self, game):
         self.game = game
         self.board = self.game.getGameBoard()
         self.state = self.game.inGame()
-        self.randPlayNum = randPlayNum
+        self.randNum = 1000
 
-    def makeMove(self):
-        # get legal moves first
+    def doMove(self):
         legalMoves = self.game.legalMoves()
         winCounts = {}
 
         # for each legal move, do a number of random play, and store the value in winCounts
         for move in legalMoves:
-            winCounts[move] = 0
-            for i in range(self.randPlayNum): 
-                winCounts[move] += self.randomPlay(move)
+            winCounts[move] = 0;
+            for i in range(self.randNum): 
+                winCounts[move] += self.randomPlayOuts(move)
 
-        # find the largest choice win count to find the optimal choice
-        movechoice = legalMoves[0]
-        choiceWinCount = winCounts[movechoice]
-        for i in winCounts:
-            if winCounts[i] >= choiceWinCount:
-                movechoice = i
-                choiceWinCount = winCounts[i]
+        # learned from https://stackoverflow.com/questions/268272/getting-key-with-maximum-value-in-dictionary
+        optChoice = max(winCounts.items(), key = operator.itemgetter(1))[0]
 
-        self.game.doMove(int(movechoice), self.game.activePlayer)
+        self.game.doMove(int(optChoice), self.game.currentPlayer)
 
-
-    def randomPlay(self, move):
+    def randomPlayOuts(self, move):
         # get copy a copy of game, and set it as game here
-        game = self.game.copyGameState()
-        game.doMove(move, game.activePlayer)
-        game.switchPlayer()
+        game = self.game.copyGame()
+        game.doMove(move, game.currentPlayer)
         while game.inGame() == True:
-            legalMoves = game.legalMoves()
-            randMove = random.randint(0, 8)
-            while(randMove not in legalMoves):
-                randMove = random.randint(0, 8)
-            game.doMove(randMove, game.activePlayer)
             game.switchPlayer()
-            game.state = game.inGame()
+            legalMoves = game.legalMoves()
 
-        # if the AI is player 1
+            randMove = random.choice(legalMoves)
+            game.doMove(randMove, game.currentPlayer)
+
         if game.getAI() == 1:
             if game.winLoseDraw() == 2:
                 return -3
@@ -164,53 +150,50 @@ class monteCarloTreeSearch:
 
 def play_a_new_game():
     game = ticTacToe()
-    aiMonte = monteCarloTreeSearch(game, 1000)
+    AI = monteCarloTreeSearch(game)
     gameState = game.inGame()
-    choice = ''
 
     # user guide
-    print('\nNumber for the corresponding tile:\n')
+    print('\nNumbers for the positions:\n')
     print('0 1 2 \n3 4 5 \n6 7 8\n')
     order = input('Do you want to go first? (Y for yes, and N for no): ')
 
     if (order.upper() == 'N'):
         print("You are Player 2 (O)")
 
-        aiMonte.makeMove()
+        AI.doMove()
         game.switchPlayer()
         game.display()
 
-        choice = input('Your next move is: ')
-        game.doMove(int(choice), game.activePlayer)
-
+        choice = input('Please enter your next move: ')
+        game.doMove(int(choice), game.currentPlayer)
     else:
         print("You are Player 1 (X)")
 
         game.setAI(2)
         game.display()
 
-        choice = input('Your next move is: ')
-        game.doMove(int(choice), game.activePlayer)
+        choice = input('Please enter your next move: ')
+        game.doMove(int(choice), game.currentPlayer)
 
-    while gameState == True:
-        
+    while gameState:
         game.switchPlayer()
-        aiMonte.makeMove()
+        AI.doMove()
 
         gameState = game.inGame()
         game.switchPlayer()
-        if gameState == True:
+        if gameState:
             
             game.display()
-            choice = input('Your next move is: ')
-            game.doMove(int(choice), game.activePlayer)
+            choice = input('Please enter your next move: ')
+            game.doMove(int(choice), game.currentPlayer)
 
-            gameCheck = game.copyGameState()
-            gameCheck.doMove(int(choice), gameCheck.activePlayer)
-            gameState = gameCheck.inGame()
+            copy = game.copyGame()
+            copy.doMove(int(choice), copy.currentPlayer)
+            gameState = copy.inGame()
 
     # when game comes to an end
-    game.doMove(int(choice), game.activePlayer)    
+    game.doMove(int(choice), game.currentPlayer)    
     game.display()
     print("Game Over")
     
