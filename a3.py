@@ -39,7 +39,7 @@ class ticTacToe:
     def switchPlayer(self):
         if (self.currentPlayer == 1):
             self.currentPlayer = 2
-        else:
+        if (self.currentPlayer == 2):
             self.currentPlayer = 1
         return self.currentPlayer
 
@@ -72,7 +72,7 @@ class ticTacToe:
     # return -1 if not finished yet, return 0 if draw
     # return 1 if player 1 wins, return 2 if player 2 wins
     def winLoseDraw(self):
-        winState = [(0,3,6), (1,4,7), (2,5,8), (0,1,2), (3,4,5), (6,7,8), (0,4,8), (2,4,6)]
+        winState = [(0,1,2), (3,4,5), (6,7,8), (0,3,6), (1,4,7), (2,5,8), (0,4,8), (2,4,6)]
         for i in range(8):
             if (self.gameBoard[winState[i][0]] == self.gameBoard[winState[i][1]]) and (self.gameBoard[winState[i][0]] == self.gameBoard[winState[i][2]]) and self.noZeroCheck(winState[i]):
                 if self.gameBoard[winState[i][0]] == 2:
