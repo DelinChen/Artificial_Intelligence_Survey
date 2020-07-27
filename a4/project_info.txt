@@ -1,0 +1,20 @@
+Project: Fast Implementations of WalkSAT and Resolution Proving
+Number of people: 1
+Name: Delin Chen
+Languages: C++, Python
+Libraries:
+C++:
+<iostream>
+<fstream>
+<string>
+<vector>
+<algorithm>
+<cstdlib>
+<ctime>
+
+Python:
+argparse
+pprint
+re
+random
+copy

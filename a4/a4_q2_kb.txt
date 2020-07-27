@@ -1,0 +1,9 @@
+at_home <-- connected_to_home_wifi
+
+night_mode <-- at_home & night
+
+warm_lights <-- night_mode & turn_on_lights
+
+sleeping <-- screen_off & night_mode & on_bed
+
+turn_off_lights <-- sleeping
